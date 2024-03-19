@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Scheduler(beta) </title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            animation: fadeIn 0.7s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+        h1, h2 {
+            text-align: center;
+        }
+
+        #eventForm, #eventList {
+            width: 60%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        input, button {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+            padding: 10px;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        li:hover {
+            background-color: #f0f0f0;
+        }
+
+        .edit-btn, .delete-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 5px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .edit-btn {
+            right: 50px;
+        }
+
+        .delete-btn {
+            right: 20px;
+        }
+
+        .edit-btn:hover, .delete-btn:hover {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Event Scheduler</h1>
+    <div id="eventForm">
+        <h2>Create New Event</h2>
+        <form id="newEventForm">
+            <label for="eventName">Event Name:</label>
+            <input type="text" id="eventName" required>
+            <label for="eventDate">Event Date:</label>
+            <input type="datetime-local" id="eventDate" required>
+            <button type="submit">Create Event</button>
+        </form>
+
+
+    </div>
+    <div id="eventList">
+        <h2>Events</h2>
+        <ul id="events"></ul>
+        <button id="clearEventsBtn">Clear All Events</button>
+    </div>
+
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+            const eventForm = document.getElementById('newEventForm');
+            const eventsList = document.getElementById('events');
+            const clearEventsBtn = document.getElementById('clearEventsBtn');
+
+            
+            const savedEvents = JSON.parse(localStorage.getItem('events')) || [];
+            savedEvents.forEach(event => createEvent(event.name, event.date));
+
+            eventForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const eventName = document.getElementById('eventName').value;
+                const eventDate = document.getElementById('eventDate').value;
+
+                createEvent(eventName, eventDate);
+                eventForm.reset();
+            });
+
+            clearEventsBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all events?')) {
+                    
+                    eventsList.innerHTML = '';
+
+                    
+                    localStorage.removeItem('events');
+                }
+            });
+
+            function createEvent(name, date) {
+                const eventItem = document.createElement('li');
+                eventItem.innerHTML = `<strong>${name}</strong> - ${date}
+                                        <button class="edit-btn">Edit</button>
+                                        <button class="delete-btn">Delete</button>`;
+                eventsList.appendChild(eventItem);
+
+               
+                const savedEvents = JSON.parse(localStorage.getItem('events')) || [];
+                savedEvents.push({ name, date });
+                localStorage.setItem('events', JSON.stringify(savedEvents));
+
+                eventItem.querySelector('.edit-btn').addEventListener('click', function() {
+                    editEvent(eventItem, name, date);
+                });
+                eventItem.querySelector('.delete-btn').addEventListener('click', function() {
+                    deleteEvent(eventItem, name, date);
+                });
+            }
+
+            function editEvent(eventItem, oldName, oldDate) {
+                const newName = prompt('Enter new event name:', oldName);
+                const newDate = prompt('Enter new event date:', oldDate);
+                if (newName !== null && newDate !== null) {
+                    
+                    eventItem.querySelector('strong').textContent = newName + ' - ' + newDate;
+
+                    
+                    const savedEvents = JSON.parse(localStorage.getItem('events')) || [];
+                    const index = savedEvents.findIndex(event => event.name === oldName && event.date === oldDate);
+                    if (index !== -1) {
+                        savedEvents[index] = { name: newName, date: newDate };
+                        localStorage.setItem('events', JSON.stringify(savedEvents));
+                    }
+                }
+            }
+
+            function deleteEvent(eventItem, name, date) {
+                if (confirm('Are you sure you want to delete this event?')) {
+                    
+                    eventItem.remove();
+
+                    
+                    const savedEvents = JSON.parse(localStorage.getItem('events')) || [];
+                    const index = savedEvents.findIndex(event => event.name === name && event.date === date);
+                    if (index !== -1) {
+                        savedEvents.splice(index, 1);
+                        localStorage.setItem('events', JSON.stringify(savedEvents));
+                    }
+                }
+            }
+            const storedColor = localStorage.getItem('backgroundColor');
+
+    if (storedColor) {
+        if (storedColor.startsWith('linear-gradient')) {
+            document.body.style.background = storedColor;
+        } else {
+            document.body.style.backgroundColor = storedColor;
+        }
+    }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
